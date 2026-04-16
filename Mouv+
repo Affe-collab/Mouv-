@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mouv+ — Plateforme de Transport à Djibouti</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sand: #F5E6C8;
+    --rust: #C84B2F;
+    --deep: #0D1B2A;
+    --ocean: #1A4A6B;
+    --gold: #E8A020;
+    --light: #FAF6EF;
+    --muted: #8A7A68;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--light);
+    color: var(--deep);
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 5%;
+    background: rgba(13, 27, 42, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(232,160,32,0.2);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.4rem;
+    color: var(--sand);
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--gold); }
+
+  nav ul {
+    display: flex; gap: 2.5rem; list-style: none;
+  }
+
+  nav ul a {
+    color: rgba(245,230,200,0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--gold); }
+
+  .nav-cta {
+    background: var(--rust);
+    color: white !important;
+    padding: 0.55rem 1.4rem;
+    border-radius: 6px;
+    font-weight: 600 !important;
+  }
+
+  .nav-cta:hover { background: #e05535; color: white !important; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    background: var(--deep);
+    display: flex; align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 8rem 5% 4rem;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 50%, rgba(26,74,107,0.5) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 20% 80%, rgba(200,75,47,0.2) 0%, transparent 50%);
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(232,160,32,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(232,160,32,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Animated road lines */
+  .road-lines {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 50%;
+    overflow: hidden; opacity: 0.15;
+  }
+
+  .road-line {
+    position: absolute; width: 3px;
+    background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    animation: roadMove 3s linear infinite;
+  }
+
+  .road-line:nth-child(1) { left: 20%; height: 200px; animation-delay: 0s; }
+  .road-line:nth-child(2) { left: 40%; height: 300px; animation-delay: 1s; }
+  .road-line:nth-child(3) { left: 60%; height: 250px; animation-delay: 0.5s; }
+  .road-line:nth-child(4) { left: 80%; height: 180px; animation-delay: 1.5s; }
+
+  @keyframes roadMove {
+    0% { top: -300px; }
+    100% { top: 110%; }
+  }
+
+  .hero-content {
+    position: relative; z-index: 2;
+    max-width: 700px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(232,160,32,0.15);
+    border: 1px solid rgba(232,160,32,0.4);
+    color: var(--gold);
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--sand);
+    margin-bottom: 1.5rem;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--gold);
+    position: relative;
+  }
+
+  h1 em::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: -4px; height: 3px;
+    background: var(--rust);
+    border-radius: 2px;
+  }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    color: rgba(245,230,200,0.65);
+    line-height: 1.7;
+    max-width: 540px;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+  }
+
+  .hero-btns {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--rust);
+    color: white;
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+
+  .btn-primary:hover { background: #e05535; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(200,75,47,0.4); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--sand);
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: 1px solid rgba(245,230,200,0.3);
+    transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+  .hero-stats {
+    position: absolute; bottom: 3rem; right: 5%;
+    display: flex; gap: 3rem;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+
+  .stat {
+    text-align: right;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: rgba(245,230,200,0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.3rem;
+  }
+
+  /* ── SERVICES ── */
+  #services {
+    padding: 7rem 5%;
+    background: var(--light);
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .section-tag {
+    display: inline-block;
+    color: var(--rust);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    color: var(--deep);
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+
+  .section-sub {
+    color: var(--muted);
+    font-size: 1rem;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .service-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2.2rem;
+    border: 1px solid rgba(13,27,42,0.07);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .service-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--rust);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+
+  .service-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(13,27,42,0.1);
+    border-color: transparent;
+  }
+
+  .service-card:hover::before { transform: scaleX(1); }
+
+  .service-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .ic-taxi   { background: rgba(200,75,47,0.1); }
+  .ic-bus    { background: rgba(26,74,107,0.1); }
+  .ic-cargo  { background: rgba(232,160,32,0.1); }
+  .ic-moto   { background: rgba(13,27,42,0.07); }
+  .ic-school { background: rgba(200,75,47,0.1); }
+  .ic-port   { background: rgba(26,74,107,0.1); }
+
+  .service-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--deep);
+    margin-bottom: 0.7rem;
+  }
+
+  .service-card p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  .service-tag {
+    display: inline-block;
+    margin-top: 1.2rem;
+    padding: 0.25rem 0.8rem;
+    background: var(--sand);
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--rust);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── HOW IT WORKS ── */
+  #how {
+    padding: 7rem 5%;
+    background: var(--deep);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #how::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(26,74,107,0.4), transparent);
+  }
+
+  #how .section-header h2 { color: var(--sand); }
+  #how .section-tag { color: var(--gold); }
+  #how .section-sub { color: rgba(245,230,200,0.5); }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative; z-index: 2;
+  }
+
+  .step {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .step:nth-child(1) { animation-delay: 0.1s; }
+  .step:nth-child(2) { animation-delay: 0.2s; }
+  .step:nth-child(3) { animation-delay: 0.3s; }
+  .step:nth-child(4) { animation-delay: 0.4s; }
+
+  .step-num {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--gold);
+    position: relative;
+  }
+
+  .step-num::after {
+    content: '';
+    position: absolute; inset: 4px;
+    border-radius: 50%;
+    background: rgba(232,160,32,0.1);
+  }
+
+  .step h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--sand);
+    margin-bottom: 0.8rem;
+  }
+
+  .step p {
+    color: rgba(245,230,200,0.5);
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+
+  /* ── BOOKING FORM ── */
+  #booking {
+    padding: 7rem 5%;
+    background: var(--sand);
+  }
+
+  .booking-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+  }
+
+  .booking-info h2 { margin-bottom: 1rem; }
+
+  .booking-info p {
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .booking-features {
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+
+  .bfeature {
+    display: flex; align-items: center; gap: 0.9rem;
+  }
+
+  .bfeature-icon {
+    width: 38px; height: 38px;
+    background: white;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(13,27,42,0.08);
+  }
+
+  .bfeature span {
+    font-size: 0.9rem;
+    color: var(--deep);
+    font-weight: 500;
+  }
+
+  .booking-form {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 20px 60px rgba(13,27,42,0.1);
+  }
+
+  .form-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--deep);
+    margin-bottom: 1.8rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1.5px solid rgba(13,27,42,0.1);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--deep);
+    background: var(--light);
+    transition: border-color 0.2s;
+    outline: none;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--ocean);
+    background: white;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  /* ── PRICING ── */
+  #tarifs {
+    padding: 7rem 5%;
+    background: white;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .price-card {
+    border-radius: 18px;
+    padding: 2.5rem 2rem;
+    border: 1.5px solid rgba(13,27,42,0.08);
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .price-card.featured {
+    background: var(--deep);
+    border-color: transparent;
+    transform: scale(1.04);
+  }
+
+  .price-card:hover:not(.featured) {
+    transform: translateY(-5px);
+    border-color: var(--rust);
+  }
+
+  .price-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--deep);
+    padding: 0.2rem 1rem;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .price-type {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 1rem;
+  }
+
+  .price-card:not(.featured) .price-type { color: var(--muted); }
+  .price-card.featured .price-type { color: var(--gold); }
+
+  .price-amount {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .price-card:not(.featured) .price-amount { color: var(--deep); }
+  .price-card.featured .price-amount { color: var(--sand); }
+
+  .price-unit {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+  }
+
+  .price-card.featured .price-unit { color: rgba(245,230,200,0.5); }
+
+  .price-features {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 0.7rem;
+    margin-bottom: 2rem;
+  }
+
+  .price-features li {
+    font-size: 0.88rem;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .price-card:not(.featured) .price-features li { color: var(--muted); }
+  .price-card.featured .price-features li { color: rgba(245,230,200,0.8); }
+
+  .price-features li::before {
+    content: '✓';
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .price-btn {
+    display: block;
+    text-align: center;
+    padding: 0.85rem;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+
+  .price-card:not(.featured) .price-btn {
+    background: var(--light);
+    color: var(--deep);
+    border: 1.5px solid rgba(13,27,42,0.1);
+  }
+
+  .price-card:not(.featured) .price-btn:hover {
+    background: var(--rust);
+    color: white;
+    border-color: transparent;
+  }
+
+  .price-card.featured .price-btn {
+    background: var(--gold);
+    color: var(--deep);
+  }
+
+  .price-card.featured .price-btn:hover {
+    background: #f0b030;
+    transform: translateY(-2px);
+  }
+
+  /* ── DRIVERS CTA ── */
+  #drivers {
+    padding: 6rem 5%;
+    background: var(--rust);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #drivers::before {
+    content: '🚗';
+    position: absolute;
+    font-size: 20rem;
+    opacity: 0.05;
+    left: -2rem; top: 50%;
+    transform: translateY(-50%);
+  }
+
+  #drivers::after {
+    content: '🚌';
+    position: absolute;
+    font-size: 15rem;
+    opacity: 0.05;
+    right: -1rem; top: 50%;
+    transform: translateY(-50%);
+  }
+
+  #drivers h2 {
+    color: white;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  #drivers p {
+    color: rgba(255,255,255,0.8);
+    max-width: 520px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .btn-white {
+    background: white;
+    color: var(--rust);
+    padding: 1rem 2.5rem;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .btn-white:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.15); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--deep);
+    padding: 4rem 5% 2rem;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+    max-width: 1200px;
+    margin-left: auto; margin-right: auto;
+  }
+
+  .footer-brand .logo { display: block; margin-bottom: 1rem; font-size: 1.5rem; }
+
+  .footer-brand p {
+    color: rgba(245,230,200,0.45);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    max-width: 280px;
+  }
+
+  .footer-col h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    margin-bottom: 1.2rem;
+  }
+
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+
+  .footer-col ul a {
+    color: rgba(245,230,200,0.45);
+    text-decoration: none;
+    font-size: 0.88rem;
+    transition: color 0.2s;
+  }
+
+  .footer-col ul a:hover { color: var(--sand); }
+
+  .footer-bottom {
+    border-top: 1px solid rgba(245,230,200,0.08);
+    padding-top: 2rem;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .footer-bottom p {
+    color: rgba(245,230,200,0.3);
+    font-size: 0.8rem;
+  }
+
+  .social-links { display: flex; gap: 0.8rem; }
+
+  .social-links a {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: rgba(245,230,200,0.07);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(245,230,200,0.5);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  .social-links a:hover { background: var(--rust); color: white; }
+
+  /* ── MOBILE NAV TOGGLE ── */
+  .nav-toggle {
+    display: none;
+    background: none; border: none;
+    cursor: pointer;
+    flex-direction: column; gap: 5px;
+  }
+
+  .nav-toggle span {
+    display: block; width: 24px; height: 2px;
+    background: var(--sand); border-radius: 2px;
+    transition: all 0.3s;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: var(--deep); color: var(--sand);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--gold);
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0; pointer-events: none;
+    transform: translateY(20px);
+    transition: all 0.4s;
+    z-index: 999;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  }
+
+  .toast.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .booking-wrap { grid-template-columns: 1fr; gap: 3rem; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    nav ul { display: none; }
+    .nav-toggle { display: flex; }
+    .hero-stats { position: relative; bottom: auto; right: auto; justify-content: flex-start; margin-top: 3rem; }
+    .price-card.featured { transform: scale(1); }
+  }
+
+  @media (max-width: 600px) {
+    .footer-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .hero-stats { gap: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">Djib<span>Transport</span></a>
+  <ul>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#how">Comment ça marche</a></li>
+    <li><a href="#tarifs">Tarifs</a></li>
+    <li><a href="#drivers">Devenir chauffeur</a></li>
+    <li><a href="#booking" class="nav-cta">Réserver</a></li>
+  </ul>
+  <button class="nav-toggle" onclick="this.classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="road-lines">
+    <div class="road-line"></div>
+    <div class="road-line"></div>
+    <div class="road-line"></div>
+    <div class="road-line"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-badge">🇩🇯 Djibouti · Lancé en 2025</div>
+    <h1>Transport <em>rapide</em><br>et fiable à<br>Djibouti</h1>
+    <p class="hero-sub">Taxi, bus, cargo, livraison express — réservez en quelques secondes depuis votre téléphone. Paiement Wave, D-Money ou cash.</p>
+    <div class="hero-btns">
+      <a href="#booking" class="btn-primary">🚕 Réserver maintenant</a>
+      <a href="#services" class="btn-secondary">Voir les services →</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">5min</div>
+      <div class="stat-label">Délai moyen</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">24/7</div>
+      <div class="stat-label">Disponible</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Djiboutien</div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-header">
+    <span class="section-tag">Nos Services</span>
+    <h2>Tout ce dont vous<br>avez besoin</h2>
+    <p class="section-sub">De la course rapide au transport de marchandises, DjibTransport couvre tous vos besoins de déplacement.</p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-icon ic-taxi">🚕</div>
+      <h3>Taxi à la demande</h3>
+      <p>Réservez un taxi en temps réel. Chauffeur confirmé en moins de 3 minutes dans Djibouti-ville et ses alentours.</p>
+      <span class="service-tag">Disponible maintenant</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon ic-bus">🚌</div>
+      <h3>Transport collectif</h3>
+      <p>Bus et minibus entre les quartiers : Plateau du Serpent, Balbala, Arhiba, PK12. Tarifs réduits, trajets planifiés.</p>
+      <span class="service-tag">Populaire</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon ic-cargo">📦</div>
+      <h3>Livraison Cargo</h3>
+      <p>Transport de marchandises, colis et commandes entre entreprises. Idéal pour commerçants et boutiques en ligne.</p>
+      <span class="service-tag">B2B</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon ic-moto">🏍️</div>
+      <h3>Moto Express</h3>
+      <p>Livraison ultra-rapide de petits colis, repas et documents. Le plus rapide dans les ruelles et zones encombrées.</p>
+      <span class="service-tag">Express</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon ic-school">🏫</div>
+      <h3>Transport Scolaire</h3>
+      <p>Navettes sécurisées pour enfants avec chauffeurs certifiés. Suivi en temps réel pour les parents.</p>
+      <span class="service-tag">Sécurisé</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon ic-port">⚓</div>
+      <h3>Transfert Port / Aéroport</h3>
+      <p>Navettes dédiées entre le port de Djibouti, l'aéroport international et les hôtels. Ponctuel, climatisé.</p>
+      <span class="service-tag">VIP</span>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-header" style="position:relative;z-index:2">
+    <span class="section-tag">Fonctionnement</span>
+    <h2>3 étapes, c'est parti</h2>
+    <p class="section-sub" style="color:rgba(245,230,200,0.5)">Réserver un transport n'a jamais été aussi simple à Djibouti.</p>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Choisissez votre service</h3>
+      <p>Sélectionnez le type de transport dont vous avez besoin : taxi, bus, cargo ou moto.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Indiquez votre itinéraire</h3>
+      <p>Entrez votre point de départ et destination. Le système calcule le prix instantanément.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Payez et suivez</h3>
+      <p>Payez par Wave, D-Money ou cash. Suivez votre chauffeur en temps réel sur la carte.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Arrivez à bon port</h3>
+      <p>Notez votre chauffeur, partagez votre trajet et recommandez DjibTransport.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING FORM -->
+<section id="booking">
+  <div class="booking-wrap">
+    <div class="booking-info">
+      <span class="section-tag">Réservation</span>
+      <h2>Réservez votre<br>transport maintenant</h2>
+      <p>Remplissez le formulaire ci-contre. Un chauffeur confirmé vous contacte immédiatement par WhatsApp ou appel téléphonique.</p>
+      <div class="booking-features">
+        <div class="bfeature">
+          <div class="bfeature-icon">💳</div>
+          <span>Paiement Wave Money, D-Money ou cash</span>
+        </div>
+        <div class="bfeature">
+          <div class="bfeature-icon">📍</div>
+          <span>Suivi GPS en temps réel</span>
+        </div>
+        <div class="bfeature">
+          <div class="bfeature-icon">✅</div>
+          <span>Chauffeurs vérifiés et notés</span>
+        </div>
+        <div class="bfeature">
+          <div class="bfeature-icon">📞</div>
+          <span>Support WhatsApp 24h/7j</span>
+        </div>
+      </div>
+    </div>
+    <div class="booking-form">
+      <div class="form-title">🚕 Nouvelle réservation</div>
+      <div class="form-group">
+        <label>Type de service</label>
+        <select id="f-service">
+          <option value="">-- Sélectionner --</option>
+          <option>🚕 Taxi à la demande</option>
+          <option>🚌 Transport collectif</option>
+          <option>📦 Livraison Cargo</option>
+          <option>🏍️ Moto Express</option>
+          <option>🏫 Transport Scolaire</option>
+          <option>⚓ Transfert Port / Aéroport</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Point de départ</label>
+        <input type="text" id="f-from" placeholder="Ex: Place Menelik, Djibouti-ville">
+      </div>
+      <div class="form-group">
+        <label>Destination</label>
+        <input type="text" id="f-to" placeholder="Ex: Aéroport international">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="form-group">
+          <label>Heure</label>
+          <input type="time" id="f-time">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Votre nom</label>
+          <input type="text" id="f-name" placeholder="Prénom & Nom">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp / Tél</label>
+          <input type="tel" id="f-phone" placeholder="+253 77 XX XX XX">
+        </div>
+      </div>
+      <button class="btn-primary submit-btn" onclick="submitBooking()">Confirmer la réservation →</button>
+    </div>
+  </div>
+</section>
+
+<!-- TARIFS -->
+<section id="tarifs">
+  <div class="section-header">
+    <span class="section-tag">Tarifs</span>
+    <h2>Prix clairs, sans surprise</h2>
+    <p class="section-sub">Tous les prix sont en Francs Djiboutiens (FDJ). Payez Wave, D-Money ou cash.</p>
+  </div>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-type">Moto Express</div>
+      <div class="price-amount">500</div>
+      <div class="price-unit">FDJ / course en ville</div>
+      <ul class="price-features">
+        <li>Livraison en 15–20 min</li>
+        <li>Colis jusqu'à 5 kg</li>
+        <li>Centre-ville uniquement</li>
+        <li>Paiement Wave / D-Money</li>
+      </ul>
+      <a href="#booking" class="price-btn">Réserver</a>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-badge">⭐ Le plus populaire</div>
+      <div class="price-type">Taxi Standard</div>
+      <div class="price-amount">1 500</div>
+      <div class="price-unit">FDJ / course (5 km)</div>
+      <ul class="price-features">
+        <li>Climatisé, confortable</li>
+        <li>Chauffeur professionnel</li>
+        <li>Toute la ville + banlieue</li>
+        <li>Suivi GPS en temps réel</li>
+        <li>Paiement Wave / D-Money / cash</li>
+      </ul>
+      <a href="#booking" class="price-btn">Réserver maintenant</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-type">Cargo / Livraison</div>
+      <div class="price-amount">3 000</div>
+      <div class="price-unit">FDJ / trajet standard</div>
+      <ul class="price-features">
+        <li>Camionnette ou pickup</li>
+        <li>Jusqu'à 500 kg</li>
+        <li>Port → ville → Balbala</li>
+        <li>Facture professionnelle</li>
+      </ul>
+      <a href="#booking" class="price-btn">Demander un devis</a>
+    </div>
+  </div>
+</section>
+
+<!-- DRIVERS CTA -->
+<section id="drivers">
+  <h2>Vous avez un véhicule ?<br>Gagnez de l'argent</h2>
+  <p>Rejoignez notre réseau de chauffeurs partenaires. Travaillez à votre rythme, gardez 85% de chaque course. Inscription gratuite.</p>
+  <a href="#" class="btn-white" onclick="showToast('✅ Inscription chauffeur — on vous contacte sous 24h !'); return false;">Devenir chauffeur partenaire</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="logo">Djib<span>Transport</span></a>
+      <p>La première plateforme de transport connectée à Djibouti. Rapide, fiable, 100% djiboutien.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#">Taxi à la demande</a></li>
+        <li><a href="#">Transport collectif</a></li>
+        <li><a href="#">Livraison cargo</a></li>
+        <li><a href="#">Moto express</a></li>
+        <li><a href="#">Transfert aéroport</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Entreprise</h4>
+      <ul>
+        <li><a href="#">À propos</a></li>
+        <li><a href="#">Devenir chauffeur</a></li>
+        <li><a href="#">Partenaires B2B</a></li>
+        <li><a href="#">Presse</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="tel:+25377000000">+253 77 00 00 00</a></li>
+        <li><a href="https://wa.me/25377000000">WhatsApp</a></li>
+        <li><a href="mailto:contact@djibtransport.dj">contact@djibtransport.dj</a></li>
+        <li><a href="#">Djibouti-ville, DJ</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 DjibTransport · Tous droits réservés</p>
+    <div class="social-links">
+      <a href="#" title="WhatsApp">💬</a>
+      <a href="#" title="Instagram">📸</a>
+      <a href="#" title="Facebook">📘</a>
+      <a href="#" title="TikTok">🎵</a>
+    </div>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  function submitBooking() {
+    const service = document.getElementById('f-service').value;
+    const from    = document.getElementById('f-from').value.trim();
+    const to      = document.getElementById('f-to').value.trim();
+    const name    = document.getElementById('f-name').value.trim();
+    const phone   = document.getElementById('f-phone').value.trim();
+
+    if (!service || !from || !to || !name || !phone) {
+      showToast('⚠️ Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+
+    showToast('✅ Réservation confirmée ! Un chauffeur vous contacte sous 5 min.');
+
+    // Reset form
+    ['f-service','f-from','f-to','f-date','f-time','f-name','f-phone'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+  }
+
+  // Smooth scroll on nav links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Set min date on date picker
+  document.getElementById('f-date').min = new Date().toISOString().split('T')[0];
+
+  // Animate stats counter
+  document.querySelectorAll('.stat-num').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(10px)';
+    setTimeout(() => {
+      el.style.transition = 'all 0.6s ease';
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, 800);
+  });
+</script>
+</body>
+</html>
