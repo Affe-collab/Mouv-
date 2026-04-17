@@ -248,6 +248,860 @@
     margin-top: 0.3rem;
   }
 
+  // Mouv' Transport — Service Worker (Cache offline)
+const CACHE_NAME = 'mouv-v1';
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap'
+];
+
+// Installation : mise en cache
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(ASSETS).catch(() => {});
+    })
+  );
+  self.skipWaiting();
+});
+
+// Activation : suppression anciens caches
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+// Fetch : cache en priorité, réseau en fallback
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(response => {
+        if (!response || response.status !== 200) return response;
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        return response;
+      }).catch(() => caches.match('./index.html'));
+    })
+  );
+});
+{
+  "name": "Mouv' Transport",
+  "short_name": "Mouv'",
+  "description": "Service de transport rapide et fiable",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0A0F1E",
+  "theme_color": "#F97316",
+  "orientation": "portrait",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%23F97316'/%3E%3Ctext x='50%25' y='55%25' font-size='100' text-anchor='middle' dominant-baseline='middle' font-family='Arial Black' fill='white'%3EM%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%23F97316'/%3E%3Ctext x='50%25' y='55%25' font-size='280' text-anchor='middle' dominant-baseline='middle' font-family='Arial Black' fill='white'%3EM%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["travel", "transportation"],
+  "shortcuts": [
+    {
+      "name": "Réserver un trajet",
+      "short_name": "Réserver",
+      "url": "./index.html#reserver",
+      "description": "Réserver rapidement un transport"
+    }
+  ]
+}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#0A0F1E" />
+  <meta name="description" content="Mouv' - Transport rapide, fiable et accessible. Réservez votre trajet en quelques secondes." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mouv'" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Mouv' — Transport</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0A0F1E;
+      --surface: #111827;
+      --card: #161D2F;
+      --accent: #F97316;
+      --accent2: #FACC15;
+      --text: #F1F5F9;
+      --muted: #94A3B8;
+      --border: rgba(255,255,255,0.07);
+      --radius: 18px;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 28px;
+      background: rgba(10,15,30,0.85);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: var(--font-head);
+      font-size: 1.6rem; font-weight: 800;
+      color: var(--text);
+      letter-spacing: -1px;
+    }
+    .logo span { color: var(--accent); }
+    nav .btn-nav {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: .9rem;
+      cursor: pointer;
+      transition: transform .15s, background .15s;
+    }
+    nav .btn-nav:active { transform: scale(.96); }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      padding: 110px 28px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 80% 30%, rgba(249,115,22,.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 20% 80%, rgba(250,204,21,.10) 0%, transparent 55%),
+        linear-gradient(160deg, #0A0F1E 0%, #0D1429 100%);
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 540px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(249,115,22,.15);
+      border: 1px solid rgba(249,115,22,.35);
+      color: var(--accent);
+      font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 50px;
+      margin-bottom: 22px;
+      animation: fadeUp .6s ease both;
+    }
+    .badge::before { content:'●'; font-size:.6rem; animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2.6rem, 8vw, 4.2rem);
+      font-weight: 800; line-height: 1.06;
+      letter-spacing: -2px;
+      animation: fadeUp .6s .1s ease both;
+    }
+    h1 em { font-style: normal; color: var(--accent); }
+    .hero-sub {
+      margin: 20px 0 36px;
+      color: var(--muted); font-size: 1.05rem; line-height: 1.7;
+      font-weight: 300;
+      animation: fadeUp .6s .2s ease both;
+    }
+    .hero-btns {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      animation: fadeUp .6s .3s ease both;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff; border: none;
+      padding: 15px 32px; border-radius: 50px;
+      font-family: var(--font-body); font-weight: 600; font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(249,115,22,.35);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-primary:active { transform: scale(.97); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text); border: 1px solid var(--border);
+      padding: 15px 28px; border-radius: 50px;
+      font-family: var(--font-body); font-weight: 500; font-size: 1rem;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .btn-outline:active { background: rgba(255,255,255,.05); }
+
+    /* ─── INSTALL BANNER ─── */
+    #install-banner {
+      display: none;
+      position: fixed; bottom: 20px; left: 16px; right: 16px; z-index: 200;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+      animation: slideUp .4s ease;
+    }
+    #install-banner.show { display: flex; align-items: center; gap: 14px; }
+    .install-icon { font-size: 2rem; flex-shrink: 0; }
+    .install-text { flex: 1; }
+    .install-text strong { font-family: var(--font-head); font-size: .95rem; display: block; }
+    .install-text small { color: var(--muted); font-size: .8rem; }
+    .btn-install {
+      background: var(--accent); color: #fff; border: none;
+      padding: 10px 20px; border-radius: 50px;
+      font-weight: 600; font-size: .85rem; cursor: pointer; white-space: nowrap;
+    }
+    #install-banner .close-btn {
+      background: none; border: none; color: var(--muted);
+      font-size: 1.2rem; cursor: pointer; padding: 4px;
+    }
+
+    /* ─── STATS ─── */
+    .stats {
+      display: flex; gap: 0;
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin: 0 16px 40px;
+      overflow: hidden;
+      animation: fadeUp .6s .4s ease both;
+    }
+    .stat {
+      flex: 1; text-align: center;
+      padding: 24px 12px;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-family: var(--font-head);
+      font-size: 1.7rem; font-weight: 800; color: var(--accent);
+      display: block;
+    }
+    .stat-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+    /* ─── SECTIONS ─── */
+    section { padding: 60px 20px; }
+    .section-tag {
+      font-size: .72rem; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: .12em;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: clamp(1.8rem, 5vw, 2.4rem);
+      font-weight: 800; letter-spacing: -1px;
+      margin-bottom: 14px;
+    }
+    .section-sub { color: var(--muted); line-height: 1.7; margin-bottom: 36px; }
+
+    /* ─── SERVICES ─── */
+    .services-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .service-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 18px;
+      transition: transform .2s, border-color .2s;
+    }
+    .service-card:active { transform: scale(.98); }
+    .service-icon { font-size: 2rem; margin-bottom: 14px; }
+    .service-name {
+      font-family: var(--font-head);
+      font-size: .95rem; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .service-desc { font-size: .8rem; color: var(--muted); line-height: 1.6; }
+    .service-card.featured {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(249,115,22,.15), rgba(250,204,21,.08));
+      border-color: rgba(249,115,22,.3);
+    }
+
+    /* ─── RÉSERVER ─── */
+    .booking-form {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+    }
+    .form-group { margin-bottom: 18px; }
+    label { font-size: .8rem; color: var(--muted); font-weight: 500; display: block; margin-bottom: 7px; text-transform: uppercase; letter-spacing: .04em; }
+    input, select, textarea {
+      width: 100%; background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px 16px; border-radius: 12px;
+      font-family: var(--font-body); font-size: .95rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    select option { background: var(--surface); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    textarea { resize: vertical; min-height: 90px; }
+
+    /* ─── TÉLÉCHARGER ─── */
+    .download-box {
+      background: linear-gradient(135deg, var(--accent) 0%, #ea580c 100%);
+      border-radius: var(--radius);
+      padding: 36px 24px;
+      text-align: center;
+    }
+    .download-box h3 {
+      font-family: var(--font-head);
+      font-size: 1.5rem; font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .download-box p { font-size: .9rem; opacity: .85; margin-bottom: 26px; line-height: 1.6; }
+    .download-btns { display: flex; flex-direction: column; gap: 12px; }
+    .btn-dl {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      padding: 14px 20px; border-radius: 14px;
+      font-family: var(--font-body); font-size: .9rem; font-weight: 500;
+      cursor: pointer; text-decoration: none;
+      transition: background .2s;
+    }
+    .btn-dl:active { background: rgba(255,255,255,.25); }
+    .btn-dl .dl-icon { font-size: 1.6rem; }
+    .btn-dl .dl-text { text-align: left; }
+    .btn-dl .dl-text small { display: block; font-size: .72rem; opacity: .75; }
+    .btn-dl .dl-text strong { font-size: .95rem; }
+    .pwa-steps {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      margin-top: 20px;
+    }
+    .pwa-steps h4 {
+      font-family: var(--font-head);
+      font-size: 1rem; font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .step {
+      display: flex; gap: 14px; align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(249,115,22,.15);
+      border: 1px solid rgba(249,115,22,.3);
+      color: var(--accent);
+      font-weight: 700; font-size: .78rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-text strong { display: block; font-size: .85rem; margin-bottom: 2px; }
+    .step-text span { font-size: .78rem; color: var(--muted); }
+
+    /* ─── DOMAINE GRATUIT ─── */
+    .domain-guide {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px 20px;
+    }
+    .domain-option {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .domain-option:last-child { border-bottom: none; }
+    .domain-badge {
+      background: rgba(249,115,22,.12);
+      border: 1px solid rgba(249,115,22,.25);
+      color: var(--accent);
+      font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      padding: 4px 10px; border-radius: 50px; white-space: nowrap; flex-shrink: 0;
+    }
+    .domain-badge.free { background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.25); color: #4ade80; }
+    .domain-info strong { display: block; font-size: .9rem; margin-bottom: 4px; }
+    .domain-info span { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+    .domain-url {
+      font-family: monospace; font-size: .78rem;
+      background: rgba(255,255,255,.05); padding: 3px 8px; border-radius: 6px;
+      color: var(--accent2); display: inline-block; margin-top: 4px;
+    }
+
+    /* ─── OFFLINE INDICATOR ─── */
+    #offline-bar {
+      display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      background: #854d0e; color: #fef08a;
+      text-align: center; padding: 8px;
+      font-size: .82rem; font-weight: 500;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 36px 24px;
+      text-align: center;
+    }
+    .footer-logo { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; }
+    .footer-logo span { color: var(--accent); }
+    footer p { color: var(--muted); font-size: .82rem; line-height: 1.7; }
+    .footer-links { display: flex; justify-content: center; gap: 20px; margin: 16px 0; flex-wrap: wrap; }
+    .footer-links a { color: var(--muted); text-decoration: none; font-size: .82rem; }
+
+    /* ─── BOTTOM NAV ─── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      display: flex;
+      background: rgba(17,24,39,.95);
+      backdrop-filter: blur(18px);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 10px 4px;
+      cursor: pointer; background: none; border: none;
+      color: var(--muted); font-family: var(--font-body);
+      transition: color .2s;
+      font-size: .68rem;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-item .nav-icon { font-size: 1.3rem; margin-bottom: 3px; }
+
+    /* pages */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ─── SCROLL FIX ─── */
+    html { scroll-behavior: smooth; }
+    main { padding-bottom: 70px; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideUp { from { transform:translateY(100px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  </style>
+</head>
+<body>
+
+<div id="offline-bar">📶 Vous êtes hors connexion — données en cache disponibles</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Mouv<span>'</span></div>
+  <button class="btn-nav" onclick="showPage('reserver')">Réserver</button>
+</nav>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <div class="install-icon">📲</div>
+  <div class="install-text">
+    <strong>Installer Mouv'</strong>
+    <small>Application gratuite · Fonctionne hors connexion</small>
+  </div>
+  <button class="btn-install" id="install-btn">Installer</button>
+  <button class="close-btn" onclick="document.getElementById('install-banner').classList.remove('show')">✕</button>
+</div>
+
+<main>
+
+  <!-- PAGE ACCUEIL -->
+  <div class="page active" id="page-accueil">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-grid"></div>
+      <div class="hero-content">
+        <div class="badge">Disponible maintenant</div>
+        <h1>Bougez avec <em>Mouv'</em><br/>Transport fiable</h1>
+        <p class="hero-sub">Service de transport rapide, économique et accessible depuis votre téléphone. Réservez en quelques secondes.</p>
+        <div class="hero-btns">
+          <button class="btn-primary" onclick="showPage('reserver')">📍 Réserver un trajet</button>
+          <button class="btn-outline" onclick="showPage('appli')">📲 Télécharger l'app</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="stat-num">500+</span><span class="stat-label">Clients</span></div>
+      <div class="stat"><span class="stat-num">24/7</span><span class="stat-label">Disponible</span></div>
+      <div class="stat"><span class="stat-num">4.9★</span><span class="stat-label">Note</span></div>
+    </div>
+
+    <section>
+      <div class="section-tag">Nos services</div>
+      <div class="section-title">Ce qu'on propose</div>
+      <div class="services-grid">
+        <div class="service-card featured">
+          <div class="service-icon">🚗</div>
+          <div class="service-name">Transport de personnes</div>
+          <div class="service-desc">Trajets urbains, aéroports, gares — confort garanti à tarif fixe.</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">📦</div>
+          <div class="service-name">Livraison</div>
+          <div class="service-desc">Colis et courses livrés rapidement à domicile.</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">🏢</div>
+          <div class="service-name">Entreprises</div>
+          <div class="service-desc">Abonnements et contrats sur mesure.</div>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">🎉</div>
+          <div class="service-name">Événements</div>
+          <div class="service-desc">Mariages, soirées, sorties de groupe.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE RÉSERVER -->
+  <div class="page" id="page-reserver">
+    <section>
+      <div class="section-tag">Réservation</div>
+      <div class="section-title">Votre trajet</div>
+      <div class="booking-form">
+        <div class="form-group">
+          <label>📍 Adresse de départ</label>
+          <input type="text" placeholder="Ex: 12 rue de la Paix, Paris" id="depart" />
+        </div>
+        <div class="form-group">
+          <label>🏁 Destination</label>
+          <input type="text" placeholder="Ex: Aéroport CDG" id="arrivee" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>📅 Date</label>
+            <input type="date" id="date-trajet" />
+          </div>
+          <div class="form-group">
+            <label>⏰ Heure</label>
+            <input type="time" id="heure-trajet" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>🚘 Type de service</label>
+          <select id="service-type">
+            <option value="">Choisir...</option>
+            <option>Transport de personnes</option>
+            <option>Livraison de colis</option>
+            <option>Transport événement</option>
+            <option>Contrat entreprise</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>👤 Votre nom</label>
+          <input type="text" placeholder="Prénom et nom" id="nom-client" />
+        </div>
+        <div class="form-group">
+          <label>📱 Téléphone</label>
+          <input type="tel" placeholder="+33 6 00 00 00 00" id="tel-client" />
+        </div>
+        <div class="form-group">
+          <label>💬 Infos complémentaires</label>
+          <textarea placeholder="Bagages, besoins spéciaux, notes..." id="notes"></textarea>
+        </div>
+        <button class="btn-primary" style="width:100%;padding:16px;font-size:1rem;" onclick="envoyerReservation()">
+          ✅ Confirmer la réservation
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE APPLI / TÉLÉCHARGEMENT -->
+  <div class="page" id="page-appli">
+    <section>
+      <div class="section-tag">Application mobile</div>
+      <div class="section-title">Télécharger Mouv'</div>
+      <p class="section-sub">Fonctionne sur tous les téléphones, même anciens. Disponible hors connexion une fois installée.</p>
+
+      <div class="download-box">
+        <h3>📲 Installer l'application</h3>
+        <p>Gratuit · Sans abonnement · Fonctionne hors connexion · Compatible Android & iPhone</p>
+        <div class="download-btns">
+          <a class="btn-dl" id="btn-pwa-install" href="#" onclick="triggerInstall(event)">
+            <span class="dl-icon">⬇️</span>
+            <div class="dl-text">
+              <small>Installer directement</small>
+              <strong>Application Web (PWA)</strong>
+            </div>
+          </a>
+          <a class="btn-dl" href="https://affe-collab.github.io/Mouv-/" target="_blank">
+            <span class="dl-icon">🌐</span>
+            <div class="dl-text">
+              <small>Accéder au site</small>
+              <strong>Version navigateur</strong>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="pwa-steps">
+        <h4>📱 Comment installer sur votre téléphone ?</h4>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Ouvrez dans votre navigateur</strong>
+            <span>Chrome (Android) ou Safari (iPhone) recommandés</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Appuyez sur le menu ⋮ ou Partager 🔗</strong>
+            <span>Le bouton en haut à droite de votre navigateur</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>« Ajouter à l'écran d'accueil »</strong>
+            <span>L'app apparaîtra comme une vraie application</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <strong>Profitez même sans internet 🎉</strong>
+            <span>Toutes les fonctions de base restent disponibles</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- PAGE DOMAINE -->
+  <div class="page" id="page-domaine">
+    <section>
+      <div class="section-tag">Domaine gratuit</div>
+      <div class="section-title">Votre adresse web</div>
+      <p class="section-sub">Voici les meilleures options pour avoir un domaine gratuit lié à votre site GitHub.</p>
+
+      <div class="domain-guide">
+        <div class="domain-option">
+          <div>
+            <span class="domain-badge free">✅ Déjà actif</span>
+            <div class="domain-info" style="margin-top:8px">
+              <strong>GitHub Pages (votre domaine actuel)</strong>
+              <span>Gratuit, permanent, sans rien faire de plus.</span>
+              <div class="domain-url">affe-collab.github.io/Mouv-/</div>
+            </div>
+          </div>
+        </div>
+        <div class="domain-option">
+          <div>
+            <span class="domain-badge free">🆓 Gratuit</span>
+            <div class="domain-info" style="margin-top:8px">
+              <strong>Freenom (.tk / .ml / .ga)</strong>
+              <span>Domaine personnalisé gratuit. Ex: <b>mouv-transport.tk</b><br/>Inscription sur <b>freenom.com</b>, puis pointer vers GitHub Pages dans les DNS.</span>
+            </div>
+          </div>
+        </div>
+        <div class="domain-option">
+          <div>
+            <span class="domain-badge">🎓 Étudiant</span>
+            <div class="domain-info" style="margin-top:8px">
+              <strong>GitHub Student Pack</strong>
+              <span>Domaine .me gratuit 1 an avec <b>education.github.com</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="domain-option">
+          <div>
+            <span class="domain-badge">💡 Conseil</span>
+            <div class="domain-info" style="margin-top:8px">
+              <strong>js.org (pour projets JS)</strong>
+              <span>Domaine <b>mouv.js.org</b> entièrement gratuit via GitHub.<br/>Faire une PR sur leur repo.</span>
+              <div class="domain-url">mouv.js.org</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pwa-steps" style="margin-top:20px">
+        <h4>🔧 Configurer votre domaine sur GitHub Pages</h4>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Aller dans Settings → Pages</strong>
+            <span>Dans votre repo GitHub Mouv-</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Ajouter « Custom domain »</strong>
+            <span>Entrez votre domaine gratuit (ex: mouv-transport.tk)</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Mettre à jour les DNS</strong>
+            <span>Pointer vers 185.199.108.153 (GitHub IP) chez Freenom</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <strong>Activer HTTPS ✅</strong>
+            <span>Cocher "Enforce HTTPS" dans GitHub Pages Settings</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="showPage('accueil')" id="nav-accueil">
+    <span class="nav-icon">🏠</span>Accueil
+  </button>
+  <button class="nav-item" onclick="showPage('reserver')" id="nav-reserver">
+    <span class="nav-icon">📍</span>Réserver
+  </button>
+  <button class="nav-item" onclick="showPage('appli')" id="nav-appli">
+    <span class="nav-icon">📲</span>Appli
+  </button>
+  <button class="nav-item" onclick="showPage('domaine')" id="nav-domaine">
+    <span class="nav-icon">🌐</span>Domaine
+  </button>
+</nav>
+
+<script>
+  // ── Page navigation ──
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    document.getElementById('nav-' + id).classList.add('active');
+    window.scrollTo(0, 0);
+    // save offline
+    try { localStorage.setItem('lastPage', id); } catch(e){}
+  }
+
+  // ── Restore last page ──
+  try {
+    const last = localStorage.getItem('lastPage');
+    if (last) showPage(last);
+  } catch(e) {}
+
+  // ── Booking ──
+  function envoyerReservation() {
+    const d = document.getElementById('depart').value;
+    const a = document.getElementById('arrivee').value;
+    const n = document.getElementById('nom-client').value;
+    const t = document.getElementById('tel-client').value;
+    const date = document.getElementById('date-trajet').value;
+    const heure = document.getElementById('heure-trajet').value;
+    const s = document.getElementById('service-type').value;
+    const notes = document.getElementById('notes').value;
+
+    if (!d || !a || !n || !t) {
+      alert('⚠️ Merci de remplir les champs obligatoires (départ, arrivée, nom, téléphone)');
+      return;
+    }
+
+    // Save locally for offline
+    const resa = { d, a, n, t, date, heure, s, notes, ts: Date.now() };
+    try {
+      const resas = JSON.parse(localStorage.getItem('reservations') || '[]');
+      resas.push(resa);
+      localStorage.setItem('reservations', JSON.stringify(resas));
+    } catch(e){}
+
+    // WhatsApp fallback
+    const msg = encodeURIComponent(
+      `🚗 *Nouvelle réservation Mouv'*\n\n` +
+      `👤 Nom: ${n}\n📱 Tél: ${t}\n\n` +
+      `📍 Départ: ${d}\n🏁 Arrivée: ${a}\n` +
+      `📅 ${date} à ${heure}\n🚘 Service: ${s}\n💬 ${notes}`
+    );
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
+    alert('✅ Réservation enregistrée ! Nous vous contactons sous peu.');
+  }
+
+  // ── PWA Install ──
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-banner').classList.add('show');
+  });
+
+  document.getElementById('install-btn').addEventListener('click', triggerInstall);
+
+  function triggerInstall(e) {
+    if (e) e.preventDefault();
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+        document.getElementById('install-banner').classList.remove('show');
+      });
+    } else {
+      alert('📱 Pour installer:\n\n• Chrome Android: menu ⋮ → "Ajouter à l\'écran d\'accueil"\n• Safari iPhone: bouton Partager 🔗 → "Sur l\'écran d\'accueil"');
+    }
+  }
+
+  // ── Offline indicator ──
+  window.addEventListener('offline', () => {
+    document.getElementById('offline-bar').style.display = 'block';
+  });
+  window.addEventListener('online', () => {
+    document.getElementById('offline-bar').style.display = 'none';
+  });
+
+  // ── Register Service Worker ──
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
+
   /* ── SERVICES ── */
   #services {
     padding: 7rem 5%;
