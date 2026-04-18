@@ -1221,5 +1221,15 @@
     }, 800);
   });
 </script>
+  document.querySelector('form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const service = document.querySelector('[name=service]').value;
+  const depart  = document.querySelector('[name=depart]').value;
+  const dest    = document.querySelector('[name=destination]').value;
+  const nom     = document.querySelector('[name=nom]').value;
+  const tel     = document.querySelector('[name=tel]').value;
+  const msg = `Nouvelle réservation Mouv+%0A🚕 Service: ${service}%0A📍 Départ: ${depart}%0A🎯 Destination: ${dest}%0A👤 Nom: ${nom}%0A📞 Tel: ${tel}`;
+  window.open(`https://wa.me/25377543101?text=${msg}`, '_blank');
+});
 </body>
 </html>
