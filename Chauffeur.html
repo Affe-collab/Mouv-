@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mouv+ · Espace Chauffeur</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --deep: #111318;
+    --card: #16191f;
+    --border: #2a2d35;
+    --accent: #f0c040;
+    --accent2: #ff6b35;
+    --green: #22c55e;
+    --red: #ef4444;
+    --muted: #6b7280;
+    --text: #e8eaf0;
+    --text2: #9ca3af;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE OVERLAY ─── */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events:none; z-index:0;
+  }
+
+  /* ─── GLOW BLOB ─── */
+  .glow {
+    position:fixed; width:500px; height:500px;
+    background: radial-gradient(circle, rgba(240,192,64,0.08) 0%, transparent 70%);
+    border-radius:50%; pointer-events:none; z-index:0;
+    top:-100px; right:-100px;
+    animation: blobDrift 12s ease-in-out infinite alternate;
+  }
+  @keyframes blobDrift { to { transform: translate(-60px, 80px) scale(1.1); } }
+
+  /* ─── LAYOUT ─── */
+  .app { display:flex; min-height:100vh; position:relative; z-index:1; }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width:240px; flex-shrink:0;
+    background: var(--deep);
+    border-right: 1px solid var(--border);
+    display:flex; flex-direction:column;
+    position:fixed; top:0; left:0; height:100vh;
+    z-index:10;
+    transition: transform .3s ease;
+  }
+
+  .logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-text {
+    font-family:'Syne', sans-serif;
+    font-size:1.5rem; font-weight:800;
+    color: var(--accent);
+    letter-spacing:-1px;
+  }
+  .logo-sub { font-size:.7rem; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+
+  .driver-badge {
+    margin:16px; padding:14px 16px;
+    background: linear-gradient(135deg, rgba(240,192,64,0.12), rgba(240,192,64,0.04));
+    border: 1px solid rgba(240,192,64,0.2);
+    border-radius:12px;
+  }
+  .driver-avatar {
+    width:40px; height:40px; border-radius:50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; margin-bottom:8px;
+  }
+  .driver-name { font-family:'Syne',sans-serif; font-weight:700; font-size:.9rem; }
+  .driver-rating { font-size:.75rem; color:var(--accent); margin-top:2px; }
+
+  nav { padding:8px 12px; flex:1; }
+  .nav-section { font-size:.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; padding:12px 12px 6px; }
+  
+  .nav-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:10px;
+    cursor:pointer; transition:all .2s;
+    color:var(--text2); font-size:.875rem;
+    margin-bottom:2px; border:none; background:none; width:100%; text-align:left;
+  }
+  .nav-item:hover { background:rgba(255,255,255,0.05); color:var(--text); }
+  .nav-item.active { background:rgba(240,192,64,0.12); color:var(--accent); }
+  .nav-icon { width:18px; text-align:center; font-size:1rem; }
+  .nav-badge {
+    margin-left:auto; background:var(--accent); color:var(--black);
+    font-size:.65rem; font-weight:700; padding:2px 7px; border-radius:20px;
+  }
+
+  .sidebar-bottom {
+    padding:16px; border-top:1px solid var(--border);
+  }
+  .status-toggle {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px;
+    background:var(--card); border-radius:12px;
+    border: 1px solid var(--border);
+  }
+  .status-label { font-size:.8rem; color:var(--text2); }
+  .status-text { font-size:.85rem; font-weight:600; color:var(--green); }
+
+  .toggle-switch {
+    width:44px; height:24px; background:var(--green);
+    border-radius:12px; position:relative; cursor:pointer;
+    border:none; transition:background .3s;
+  }
+  .toggle-switch::after {
+    content:''; position:absolute; top:3px; right:3px;
+    width:18px; height:18px; background:white; border-radius:50%;
+    transition:right .3s;
+  }
+  .toggle-switch.off { background:var(--border); }
+  .toggle-switch.off::after { right:23px; }
+
+  /* ─── MAIN ─── */
+  .main { margin-left:240px; flex:1; padding:32px; }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:32px;
+  }
+  .page-title { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; }
+  .page-title span { color:var(--accent); }
+  .topbar-actions { display:flex; gap:10px; align-items:center; }
+  
+  .btn {
+    padding:9px 18px; border-radius:10px; border:none;
+    cursor:pointer; font-family:'DM Sans',sans-serif;
+    font-size:.85rem; font-weight:500; transition:all .2s;
+  }
+  .btn-primary { background:var(--accent); color:var(--black); font-weight:700; }
+  .btn-primary:hover { background:#f5d060; transform:translateY(-1px); }
+  .btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+  .btn-ghost:hover { border-color:var(--text2); color:var(--text); }
+
+  /* ─── STATS ROW ─── */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .stat-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:20px;
+    position:relative; overflow:hidden;
+    animation: fadeUp .5s ease both;
+  }
+  .stat-card:nth-child(1) { animation-delay:.05s; }
+  .stat-card:nth-child(2) { animation-delay:.1s; }
+  .stat-card:nth-child(3) { animation-delay:.15s; }
+  .stat-card:nth-child(4) { animation-delay:.2s; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  }
+  .stat-card.yellow::before { background:var(--accent); }
+  .stat-card.green::before  { background:var(--green); }
+  .stat-card.orange::before { background:var(--accent2); }
+  .stat-card.blue::before   { background:#60a5fa; }
+
+  .stat-icon { font-size:1.6rem; margin-bottom:12px; }
+  .stat-value { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; }
+  .stat-label { font-size:.8rem; color:var(--muted); margin-top:4px; }
+  .stat-delta { font-size:.75rem; margin-top:8px; }
+  .stat-delta.up { color:var(--green); }
+  .stat-delta.down { color:var(--red); }
+
+  /* ─── SECTIONS ─── */
+  .sections-grid { display:grid; grid-template-columns:1fr 340px; gap:20px; }
+
+  /* ─── RIDE REQUESTS ─── */
+  .panel {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; overflow:hidden;
+    animation: fadeUp .5s ease .25s both;
+  }
+  .panel-header {
+    padding:18px 20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .panel-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; }
+  .live-dot {
+    width:8px; height:8px; border-radius:50%; background:var(--green);
+    animation: pulse 1.5s infinite;
+    display:inline-block; margin-right:8px;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(34,197,94,.4); }
+    50%      { opacity:.8; box-shadow:0 0 0 6px rgba(34,197,94,0); }
+  }
+
+  /* ─── COURSE CARD ─── */
+  .course-card {
+    padding:16px 20px; border-bottom:1px solid var(--border);
+    transition:background .2s;
+    animation: fadeUp .4s ease both;
+  }
+  .course-card:hover { background:rgba(255,255,255,0.02); }
+  .course-card:last-child { border-bottom:none; }
+
+  .course-top {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .course-type { font-size:.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); }
+  .course-price {
+    font-family:'Syne',sans-serif; font-weight:800;
+    color:var(--accent); font-size:1.1rem;
+  }
+  .course-route { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .route-dots { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .dot-from { width:8px; height:8px; border-radius:50%; background:var(--green); }
+  .dot-line { width:1px; height:16px; background:var(--border); }
+  .dot-to   { width:8px; height:8px; border-radius:50%; background:var(--accent2); transform:rotate(45deg); }
+  .route-text { display:flex; flex-direction:column; gap:6px; }
+  .route-from { font-size:.85rem; color:var(--text); }
+  .route-to   { font-size:.85rem; color:var(--text2); }
+
+  .course-meta { display:flex; align-items:center; gap:12px; font-size:.75rem; color:var(--muted); margin-bottom:12px; }
+  .course-actions { display:flex; gap:8px; }
+  
+  .btn-accept {
+    flex:1; padding:9px; border-radius:9px; border:none;
+    background:var(--green); color:white; font-weight:700;
+    cursor:pointer; font-size:.85rem; transition:all .2s;
+    font-family:'DM Sans',sans-serif;
+  }
+  .btn-accept:hover { background:#16a34a; transform:translateY(-1px); }
+  .btn-decline {
+    padding:9px 14px; border-radius:9px;
+    background:transparent; border:1px solid var(--border);
+    color:var(--muted); cursor:pointer; font-size:.85rem; transition:all .2s;
+    font-family:'DM Sans',sans-serif;
+  }
+  .btn-decline:hover { border-color:var(--red); color:var(--red); }
+
+  /* ─── TIMER ─── */
+  .timer-bar {
+    height:3px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:4px;
+  }
+  .timer-fill {
+    height:100%; background:var(--accent); border-radius:2px;
+    animation: countdown 30s linear forwards;
+  }
+  @keyframes countdown { from { width:100%; } to { width:0%; } }
+
+  /* ─── SIDEBAR PANEL ─── */
+  .side-panel { display:flex; flex-direction:column; gap:16px; }
+
+  .mini-panel {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; overflow:hidden;
+    animation: fadeUp .5s ease .3s both;
+  }
+  .mini-header { padding:14px 16px; border-bottom:1px solid var(--border); }
+  .mini-title { font-family:'Syne',sans-serif; font-weight:700; font-size:.9rem; }
+
+  /* ─── EARNINGS CHART ─── */
+  .earnings-bar-group { padding:14px 16px; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .bar-day { font-size:.75rem; color:var(--muted); width:28px; }
+  .bar-track { flex:1; height:8px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; }
+  .bar-fill { height:100%; background:var(--accent); border-radius:4px; transition:width .8s ease; }
+  .bar-val { font-size:.75rem; color:var(--text2); width:45px; text-align:right; }
+
+  /* ─── HISTORY ─── */
+  .history-item {
+    padding:12px 16px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:12px;
+  }
+  .history-item:last-child { border-bottom:none; }
+  .history-icon { font-size:1.2rem; }
+  .history-text { flex:1; }
+  .history-title { font-size:.85rem; }
+  .history-sub { font-size:.75rem; color:var(--muted); margin-top:2px; }
+  .history-amount { font-family:'Syne',sans-serif; font-weight:700; font-size:.9rem; color:var(--green); }
+
+  /* ─── MAP PLACEHOLDER ─── */
+  .map-block {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; overflow:hidden; position:relative;
+    height:180px; margin-bottom:0;
+    animation: fadeUp .5s ease .35s both;
+  }
+  .map-inner {
+    width:100%; height:100%;
+    background: linear-gradient(135deg, #111820, #0d1520);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:8px;
+    position:relative; overflow:hidden;
+  }
+  .map-grid {
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(240,192,64,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(240,192,64,0.04) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .map-pin { font-size:2rem; position:relative; z-index:1; }
+  .map-label { font-size:.8rem; color:var(--muted); position:relative; z-index:1; }
+  .map-coords { font-size:.7rem; color:rgba(240,192,64,0.5); font-family:monospace; position:relative; z-index:1; }
+
+  /* ─── INSCRIPTION FORM ─── */
+  .form-section { padding:20px; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:.8rem; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:1px; }
+  .field input, .field select, .field textarea {
+    width:100%; padding:10px 14px;
+    background:rgba(255,255,255,0.04); border:1px solid var(--border);
+    border-radius:10px; color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:.875rem; transition:border .2s; outline:none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color:var(--accent);
+  }
+  .field select option { background:var(--deep); }
+  .field textarea { resize:vertical; min-height:80px; }
+
+  /* ─── TABS ─── */
+  .tabs { display:flex; gap:4px; padding:16px 20px 0; border-bottom:1px solid var(--border); }
+  .tab {
+    padding:8px 16px; border-radius:8px 8px 0 0; font-size:.85rem;
+    cursor:pointer; border:none; background:none; color:var(--muted);
+    transition:all .2s; font-family:'DM Sans',sans-serif;
+    border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab:hover:not(.active) { color:var(--text2); }
+
+  /* ─── PAGE VIEWS ─── */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ─── INSCRIPTION PAGE ─── */
+  .inscription-wrap {
+    max-width:600px; margin:0 auto;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:20px; overflow:hidden;
+    animation: fadeUp .5s ease both;
+  }
+  .inscription-header {
+    padding:28px 28px 20px;
+    background: linear-gradient(135deg, rgba(240,192,64,0.08), transparent);
+    border-bottom:1px solid var(--border);
+  }
+  .inscription-title { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; margin-bottom:4px; }
+  .inscription-sub { font-size:.875rem; color:var(--muted); }
+
+  .progress-steps {
+    display:flex; gap:0; margin-bottom:24px;
+  }
+  .step {
+    flex:1; padding:10px 0; text-align:center;
+    font-size:.75rem; color:var(--muted); position:relative;
+    transition:color .3s;
+  }
+  .step.done { color:var(--green); }
+  .step.active { color:var(--accent); font-weight:600; }
+  .step::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+    background:var(--border);
+  }
+  .step.done::after { background:var(--green); }
+  .step.active::after { background:var(--accent); }
+
+  .check-list { padding:0 28px 20px; }
+  .check-item {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 0; border-bottom:1px solid var(--border);
+    font-size:.875rem;
+  }
+  .check-item:last-child { border-bottom:none; }
+  .check-icon { font-size:1.1rem; }
+
+  /* ─── NOTIFICATION ─── */
+  .notif {
+    position:fixed; top:20px; right:20px; z-index:100;
+    padding:14px 20px; border-radius:12px; font-size:.875rem;
+    background:var(--green); color:white; font-weight:500;
+    transform:translateX(200%); transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+    display:flex; align-items:center; gap:10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+  .notif.show { transform:translateX(0); }
+
+  /* ─── MOBILE SIDEBAR TOGGLE ─── */
+  .menu-btn {
+    display:none; position:fixed; top:16px; left:16px; z-index:20;
+    width:40px; height:40px; border-radius:10px;
+    background:var(--card); border:1px solid var(--border);
+    cursor:pointer; align-items:center; justify-content:center; font-size:1.1rem;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media(max-width:900px) {
+    .sections-grid { grid-template-columns:1fr; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+  }
+  @media(max-width:640px) {
+    .sidebar { transform:translateX(-100%); }
+    .sidebar.open { transform:translateX(0); }
+    .main { margin-left:0; padding:16px; padding-top:60px; }
+    .stats-grid { grid-template-columns:1fr 1fr; }
+    .menu-btn { display:flex; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+
+<!-- NOTIFICATION TOAST -->
+<div class="notif" id="notif">✅ Course acceptée avec succès !</div>
+
+<!-- MOBILE MENU BUTTON -->
+<button class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</button>
+
+<div class="app">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-text">Mouv+</div>
+      <div class="logo-sub">Espace Chauffeur</div>
+    </div>
+
+    <div class="driver-badge">
+      <div class="driver-avatar">🧑🏿</div>
+      <div class="driver-name">Ahmed Hassan</div>
+      <div class="driver-rating">⭐ 4.92 · 312 courses</div>
+    </div>
+
+    <nav>
+      <div class="nav-section">Navigation</div>
+      <button class="nav-item active" onclick="showPage('dashboard', this)">
+        <span class="nav-icon">📊</span> Tableau de bord
+      </button>
+      <button class="nav-item" onclick="showPage('courses', this)">
+        <span class="nav-icon">🚕</span> Courses
+        <span class="nav-badge">3</span>
+      </button>
+      <button class="nav-item" onclick="showPage('revenus', this)">
+        <span class="nav-icon">💰</span> Revenus
+      </button>
+      <button class="nav-item" onclick="showPage('inscription', this)">
+        <span class="nav-icon">📝</span> Mon Profil
+      </button>
+
+      <div class="nav-section">Support</div>
+      <button class="nav-item" onclick="openWhatsApp()">
+        <span class="nav-icon">💬</span> Support WhatsApp
+      </button>
+      <button class="nav-item" onclick="showPage('regles', this)">
+        <span class="nav-icon">📋</span> Règles & Contrat
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="status-toggle">
+        <div>
+          <div class="status-label">Statut</div>
+          <div class="status-text" id="statusText">En ligne ✓</div>
+        </div>
+        <button class="toggle-switch" id="toggleBtn" onclick="toggleStatus()"></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <main class="main">
+
+    <!-- ══════════ DASHBOARD ══════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Bonjour <span>Ahmed</span> 👋</div>
+          <div style="font-size:.85rem;color:var(--muted);margin-top:4px;">Samedi 18 Avril 2026 · Djibouti-ville</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost">📍 GPS actif</button>
+          <button class="btn btn-primary" onclick="showPage('courses', document.querySelector('[onclick*=courses]'))">Voir courses →</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card yellow">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value">14 500</div>
+          <div class="stat-label">FDJ gagnés aujourd'hui</div>
+          <div class="stat-delta up">↑ +2 300 vs hier</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">🚕</div>
+          <div class="stat-value">9</div>
+          <div class="stat-label">Courses complétées</div>
+          <div class="stat-delta up">↑ +3 vs hier</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-value">4.92</div>
+          <div class="stat-label">Note moyenne</div>
+          <div class="stat-delta up">Excellent</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value">6h 20</div>
+          <div class="stat-label">Temps en ligne</div>
+          <div class="stat-delta">Journée normale</div>
+        </div>
+      </div>
+
+      <!-- MAIN GRID -->
+      <div class="sections-grid">
+
+        <!-- COURSES EN ATTENTE -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><span class="live-dot"></span>Demandes en temps réel</div>
+            <span style="font-size:.75rem;color:var(--muted);">3 disponibles</span>
+          </div>
+
+          <div class="course-card" style="animation-delay:.1s">
+            <div class="course-top">
+              <span class="course-type">🚕 Taxi standard</span>
+              <span class="course-price">2 000 FDJ</span>
+            </div>
+            <div class="course-route">
+              <div class="route-dots">
+                <div class="dot-from"></div>
+                <div class="dot-line"></div>
+                <div class="dot-to"></div>
+              </div>
+              <div class="route-text">
+                <span class="route-from">Place Menelik, Djibouti-ville</span>
+                <span class="route-to">Aéroport Int. de Djibouti</span>
+              </div>
+            </div>
+            <div class="course-meta">
+              <span>📏 7.2 km</span>
+              <span>⏱️ ~18 min</span>
+              <span>👤 Fatima M.</span>
+              <span>📞 Confirmé WA</span>
+            </div>
+            <div class="timer-bar"><div class="timer-fill"></div></div>
+            <div class="course-actions" style="margin-top:10px;">
+              <button class="btn-accept" onclick="acceptCourse(this)">✓ Accepter la course</button>
+              <button class="btn-decline" onclick="this.closest('.course-card').style.opacity='.3'">✕</button>
+            </div>
+          </div>
+
+          <div class="course-card" style="animation-delay:.2s">
+            <div class="course-top">
+              <span class="course-type">🏍️ Moto express</span>
+              <span class="course-price">700 FDJ</span>
+            </div>
+            <div class="course-route">
+              <div class="route-dots">
+                <div class="dot-from"></div>
+                <div class="dot-line"></div>
+                <div class="dot-to"></div>
+              </div>
+              <div class="route-text">
+                <span class="route-from">Marché Central, Arhiba</span>
+                <span class="route-to">Quartier Européen</span>
+              </div>
+            </div>
+            <div class="course-meta">
+              <span>📏 3.1 km</span>
+              <span>⏱️ ~8 min</span>
+              <span>👤 Omar D.</span>
+            </div>
+            <div class="course-actions" style="margin-top:10px;">
+              <button class="btn-accept" onclick="acceptCourse(this)">✓ Accepter la course</button>
+              <button class="btn-decline" onclick="this.closest('.course-card').style.opacity='.3'">✕</button>
+            </div>
+          </div>
+
+          <div class="course-card" style="animation-delay:.3s">
+            <div class="course-top">
+              <span class="course-type">📦 Livraison cargo</span>
+              <span class="course-price">4 500 FDJ</span>
+            </div>
+            <div class="course-route">
+              <div class="route-dots">
+                <div class="dot-from"></div>
+                <div class="dot-line"></div>
+                <div class="dot-to"></div>
+              </div>
+              <div class="route-text">
+                <span class="route-from">Port de Djibouti, Terminal</span>
+                <span class="route-to">Zone industrielle PK12</span>
+              </div>
+            </div>
+            <div class="course-meta">
+              <span>📏 12.4 km</span>
+              <span>⏱️ ~28 min</span>
+              <span>🏢 STE Import SA</span>
+            </div>
+            <div class="course-actions" style="margin-top:10px;">
+              <button class="btn-accept" onclick="acceptCourse(this)">✓ Accepter la course</button>
+              <button class="btn-decline" onclick="this.closest('.course-card').style.opacity='.3'">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIDE PANELS -->
+        <div class="side-panel">
+
+          <!-- MAP -->
+          <div class="map-block">
+            <div class="map-inner">
+              <div class="map-grid"></div>
+              <div class="map-pin">📍</div>
+              <div class="map-label">Votre position actuelle</div>
+              <div class="map-coords">11.5892° N, 43.1456° E</div>
+            </div>
+          </div>
+
+          <!-- GAINS SEMAINE -->
+          <div class="mini-panel">
+            <div class="mini-header">
+              <div class="mini-title">💰 Gains cette semaine</div>
+            </div>
+            <div class="earnings-bar-group">
+              <div class="bar-row"><span class="bar-day">Lun</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="bar-val">8 250</span></div>
+              <div class="bar-row"><span class="bar-day">Mar</span><div class="bar-track"><div class="bar-fill" style="width:70%"></div></div><span class="bar-val">10 500</span></div>
+              <div class="bar-row"><span class="bar-day">Mer</span><div class="bar-track"><div class="bar-fill" style="width:45%"></div></div><span class="bar-val">6 750</span></div>
+              <div class="bar-row"><span class="bar-day">Jeu</span><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><span class="bar-val">13 200</span></div>
+              <div class="bar-row"><span class="bar-day">Ven</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="bar-val">15 000</span></div>
+              <div class="bar-row"><span class="bar-day">Sam</span><div class="bar-track"><div class="bar-fill" style="width:63%;background:var(--accent2)"></div></div><span class="bar-val">14 500</span></div>
+            </div>
+            <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:.8rem;color:var(--muted)">Total semaine</span>
+              <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent)">68 200 FDJ</span>
+            </div>
+          </div>
+
+          <!-- HISTORIQUE -->
+          <div class="mini-panel">
+            <div class="mini-header">
+              <div class="mini-title">🕐 Dernières courses</div>
+            </div>
+            <div class="history-item">
+              <span class="history-icon">🚕</span>
+              <div class="history-text">
+                <div class="history-title">Menelik → PK12</div>
+                <div class="history-sub">14:32 · 8.3 km · ⭐ 5.0</div>
+              </div>
+              <span class="history-amount">+2 500</span>
+            </div>
+            <div class="history-item">
+              <span class="history-icon">🏍️</span>
+              <div class="history-text">
+                <div class="history-title">Arhiba → Plateau</div>
+                <div class="history-sub">12:15 · 3.2 km · ⭐ 5.0</div>
+              </div>
+              <span class="history-amount">+600</span>
+            </div>
+            <div class="history-item">
+              <span class="history-icon">📦</span>
+              <div class="history-text">
+                <div class="history-title">Port → Balbala</div>
+                <div class="history-sub">09:47 · 11.1 km · ⭐ 4.5</div>
+              </div>
+              <span class="history-amount">+4 000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /dashboard -->
+
+
+    <!-- ══════════ COURSES ══════════ -->
+    <div class="page" id="page-courses">
+      <div class="topbar">
+        <div class="page-title">🚕 Mes <span>Courses</span></div>
+      </div>
+      <div class="panel">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab(this,'tab-active')">En cours</button>
+          <button class="tab" onclick="switchTab(this,'tab-history')">Historique</button>
+        </div>
+        <div id="tab-active" class="tab-content">
+          <div class="course-card">
+            <div class="course-top">
+              <span class="course-type">🚕 Taxi standard · EN COURS</span>
+              <span class="course-price">2 000 FDJ</span>
+            </div>
+            <div class="course-route">
+              <div class="route-dots"><div class="dot-from"></div><div class="dot-line"></div><div class="dot-to"></div></div>
+              <div class="route-text">
+                <span class="route-from">Place Menelik, Djibouti-ville</span>
+                <span class="route-to">Aéroport Int. de Djibouti</span>
+              </div>
+            </div>
+            <div class="course-meta"><span>🟢 Client à bord</span><span>⏱ 12 min restants</span></div>
+            <div class="course-actions">
+              <button class="btn-accept" style="background:var(--accent);color:var(--black)">📞 Appeler Fatima</button>
+              <button class="btn-accept" style="background:var(--accent2)">✅ Terminer la course</button>
+            </div>
+          </div>
+        </div>
+        <div id="tab-history" class="tab-content" style="display:none">
+          <div class="history-item"><span class="history-icon">🚕</span><div class="history-text"><div class="history-title">Menelik → PK12</div><div class="history-sub">Auj. 14:32 · 8.3 km · ⭐ 5.0</div></div><span class="history-amount">+2 500 FDJ</span></div>
+          <div class="history-item"><span class="history-icon">🏍️</span><div class="history-text"><div class="history-title">Arhiba → Plateau du Serpent</div><div class="history-sub">Auj. 12:15 · 3.2 km · ⭐ 5.0</div></div><span class="history-amount">+600 FDJ</span></div>
+          <div class="history-item"><span class="history-icon">📦</span><div class="history-text"><div class="history-title">Port → Zone industrielle PK12</div><div class="history-sub">Auj. 09:47 · 11.1 km · ⭐ 4.5</div></div><span class="history-amount">+4 000 FDJ</span></div>
+          <div class="history-item"><span class="history-icon">🚕</span><div class="history-text"><div class="history-title">Balbala → Centre-ville</div><div class="history-sub">Hier 19:22 · 9.0 km · ⭐ 5.0</div></div><span class="history-amount">+2 700 FDJ</span></div>
+          <div class="history-item"><span class="history-icon">⚓</span><div class="history-text"><div class="history-title">Hôtel Sheraton → Aéroport</div><div class="history-sub">Hier 16:08 · 5.2 km · ⭐ 5.0</div></div><span class="history-amount">+3 500 FDJ</span></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══════════ REVENUS ══════════ -->
+    <div class="page" id="page-revenus">
+      <div class="topbar">
+        <div class="page-title">💰 Mes <span>Revenus</span></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card yellow">
+          <div class="stat-icon">📅</div>
+          <div class="stat-value">14 500</div>
+          <div class="stat-label">FDJ aujourd'hui</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">📆</div>
+          <div class="stat-value">68 200</div>
+          <div class="stat-label">FDJ cette semaine</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">🗓️</div>
+          <div class="stat-value">247 500</div>
+          <div class="stat-label">FDJ ce mois</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value">85%</div>
+          <div class="stat-label">Votre part (Mouv prend 15%)</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:0">
+        <div class="panel-header"><div class="panel-title">📥 Retraits disponibles</div></div>
+        <div style="padding:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div>
+              <div style="font-size:.85rem;color:var(--muted)">Solde disponible</div>
+              <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent)">67 150 FDJ</div>
+            </div>
+            <button class="btn btn-primary" onclick="showNotif('💳 Retrait D-Money initié !')">Retirer via D-Money</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <button class="btn btn-ghost" onclick="showNotif('💳 Retrait Waffi initié !')">💳 Retirer via Waffi</button>
+            <button class="btn btn-ghost" onclick="showNotif('💳 Retrait CAC Pay initié !')">💳 Retirer via CAC Pay</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══════════ INSCRIPTION / PROFIL ══════════ -->
+    <div class="page" id="page-inscription">
+      <div class="topbar">
+        <div class="page-title">📝 <span>Devenir</span> chauffeur</div>
+      </div>
+
+      <div class="inscription-wrap">
+        <div class="inscription-header">
+          <div class="inscription-title">Rejoignez Mouv+ 🚀</div>
+          <div class="inscription-sub">Travaillez à votre rythme · 85% de chaque course · Inscription gratuite</div>
+        </div>
+
+        <div style="padding:20px 28px 0">
+          <div class="progress-steps">
+            <div class="step done">✓ Infos</div>
+            <div class="step active">Véhicule</div>
+            <div class="step">Documents</div>
+            <div class="step">Validation</div>
+          </div>
+        </div>
+
+        <div class="check-list">
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;">Ce dont vous avez besoin</div>
+          <div class="check-item"><span class="check-icon">✅</span> Permis de conduire valide (Djibouti)</div>
+          <div class="check-item"><span class="check-icon">✅</span> Carte nationale d'identité ou passeport</div>
+          <div class="check-item"><span class="check-icon">✅</span> Carte grise du véhicule à jour</div>
+          <div class="check-item"><span class="check-icon">✅</span> Assurance véhicule en cours de validité</div>
+          <div class="check-item"><span class="check-icon">✅</span> Numéro WhatsApp actif</div>
+          <div class="check-item"><span class="check-icon">✅</span> Compte D-Money / Waffi / CAC Pay</div>
+        </div>
+
+        <div class="form-section">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="field"><label>Prénom</label><input type="text" placeholder="Ex: Ahmed"/></div>
+            <div class="field"><label>Nom</label><input type="text" placeholder="Ex: Hassan"/></div>
+          </div>
+          <div class="field"><label>WhatsApp / Téléphone</label><input type="tel" placeholder="+253 77 XX XX XX"/></div>
+          <div class="field"><label>Type de véhicule</label>
+            <select>
+              <option>🚕 Taxi (berline)</option>
+              <option>🏍️ Moto</option>
+              <option>📦 Camionnette / Pickup (cargo)</option>
+              <option>🚌 Minibus (transport collectif)</option>
+              <option>🚗 SUV / 4x4</option>
+            </select>
+          </div>
+          <div class="field"><label>Plaque d'immatriculation</label><input type="text" placeholder="Ex: DJ-1234-A"/></div>
+          <div class="field"><label>Zone de travail principale</label>
+            <select>
+              <option>Djibouti-ville (centre)</option>
+              <option>Balbala</option>
+              <option>Arhiba</option>
+              <option>PK12 et banlieue</option>
+              <option>Port / Aéroport</option>
+              <option>Tout Djibouti</option>
+            </select>
+          </div>
+          <div class="field"><label>Méthode de paiement préférée</label>
+            <select>
+              <option>D-Money</option>
+              <option>Waffi</option>
+              <option>CAC Pay</option>
+              <option>Exim Pay</option>
+              <option>Cash</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%;padding:13px;font-size:.95rem;" onclick="showNotif('🎉 Inscription soumise ! On vous contacte sous 24h.')">
+            Soumettre ma candidature →
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ══════════ RÈGLES ══════════ -->
+    <div class="page" id="page-regles">
+      <div class="topbar"><div class="page-title">📋 Règles & <span>Contrat</span></div></div>
+      <div class="inscription-wrap" style="max-width:100%">
+        <div style="padding:28px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:12px;color:var(--accent)">✅ Ce que vous gagnez</div>
+              <div class="check-item">💰 85% de chaque course</div>
+              <div class="check-item">📱 Accès à toutes les demandes</div>
+              <div class="check-item">🆓 Zéro frais d'inscription</div>
+              <div class="check-item">💳 Paiement rapide D-Money/Waffi</div>
+              <div class="check-item">📞 Support WhatsApp 24h/7j</div>
+            </div>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:12px;color:var(--accent2)">⚠️ Vos obligations</div>
+              <div class="check-item">⭐ Maintenir une note ≥ 4.0</div>
+              <div class="check-item">📞 Répondre en moins de 3 min</div>
+              <div class="check-item">🚫 Zéro annulation abusive</div>
+              <div class="check-item">🛡️ Véhicule propre & en ordre</div>
+              <div class="check-item">🤝 Politesse & professionnalisme</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;padding:16px;background:rgba(240,192,64,0.06);border:1px solid rgba(240,192,64,0.15);border-radius:12px;font-size:.875rem;color:var(--muted);">
+            <strong style="color:var(--accent)">Commission Mouv+</strong> : La plateforme retient 15% de chaque course pour couvrir l'assurance, la technologie et le support. Vous gardez 85%. Aucun autre frais caché.
+          </div>
+          <button class="btn btn-primary" style="margin-top:20px;width:100%;" onclick="openWhatsApp()">💬 Contacter l'équipe Mouv+ sur WhatsApp</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ─── NAVIGATION ───
+  function showPage(id, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    if(window.innerWidth <= 640) document.getElementById('sidebar').classList.remove('open');
+  }
+
+  function switchTab(btn, tabId) {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tc=>tc.style.display='none');
+    document.getElementById(tabId).style.display='block';
+  }
+
+  // ─── SIDEBAR TOGGLE (mobile) ───
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+  }
+
+  // ─── STATUS TOGGLE ───
+  let online = true;
+  function toggleStatus() {
+    online = !online;
+    const btn = document.getElementById('toggleBtn');
+    const txt = document.getElementById('statusText');
+    btn.classList.toggle('off', !online);
+    txt.textContent = online ? 'En ligne ✓' : 'Hors ligne';
+    txt.style.color = online ? 'var(--green)' : 'var(--muted)';
+    showNotif(online ? '🟢 Vous êtes maintenant en ligne !' : '🔴 Vous êtes hors ligne.');
+  }
+
+  // ─── ACCEPT COURSE ───
+  function acceptCourse(btn) {
+    const card = btn.closest('.course-card');
+    card.style.transition = 'all .4s';
+    card.style.background = 'rgba(34,197,94,0.08)';
+    card.style.borderLeft = '3px solid var(--green)';
+    btn.textContent = '✓ Course acceptée !';
+    btn.style.background = 'var(--green)';
+    btn.disabled = true;
+    showNotif('✅ Course acceptée ! Rendez-vous au point de départ.');
+  }
+
+  // ─── NOTIFICATION ───
+  function showNotif(msg) {
+    const n = document.getElementById('notif');
+    n.textContent = msg;
+    n.classList.add('show');
+    setTimeout(() => n.classList.remove('show'), 3500);
+  }
+
+  // ─── WHATSAPP ───
+  function openWhatsApp() {
+    window.open('https://wa.me/25377543101?text=Bonjour%20Mouv%2B%2C%20je%20suis%20chauffeur%20partenaire%20et%20j%27ai%20besoin%20d%27aide.', '_blank');
+  }
+
+  // ─── BAR ANIMATION ON LOAD ───
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.querySelectorAll('.bar-fill').forEach(b => {
+        const w = b.style.width;
+        b.style.width = '0%';
+        setTimeout(() => b.style.width = w, 100);
+      });
+    }, 300);
+  });
+</script>
+</body>
+</html>
