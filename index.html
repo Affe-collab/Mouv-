@@ -1115,8 +1115,7 @@
 <section id="drivers">
   <h2>Vous avez un véhicule ?<br>Gagnez de l'argent</h2>
   <p>Rejoignez notre réseau de chauffeurs partenaires. Travaillez à votre rythme, gardez 25% de chaque course. Inscription gratuite.</p>
-  <a href="#" class="btn-white" onclick="showToast('✅ Inscription chauffeur — on vous contacte sous 24h !'); return false;">Devenir chauffeur partenaire</a>
-</section>
+  <a href="#" class="btn-white" onclick="inscriptionChauffeur(); return false;">Devenir chauffeur partenaire</a>
 
 <!-- FOOTER -->
 <footer>
@@ -1167,8 +1166,11 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
-
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
+  emailjs.init('Dvz8MqyM3RIFPVbVW');
+
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -1176,10 +1178,13 @@
     setTimeout(() => t.classList.remove('show'), 4000);
   }
 
+  // ── RÉSERVATION CLIENT ──
   function submitBooking() {
     const service = document.getElementById('f-service').value;
     const from    = document.getElementById('f-from').value.trim();
     const to      = document.getElementById('f-to').value.trim();
+    const date    = document.getElementById('f-date').value;
+    const time    = document.getElementById('f-time').value;
     const name    = document.getElementById('f-name').value.trim();
     const phone   = document.getElementById('f-phone').value.trim();
 
@@ -1188,29 +1193,52 @@
       return;
     }
 
-    showToast('✅ Réservation confirmée ! Un chauffeur vous contacte sous 5 min.');
+    showToast('⏳ Envoi en cours...');
 
-    // Reset form
-    ['f-service','f-from','f-to','f-date','f-time','f-name','f-phone'].forEach(id => {
-      document.getElementById(id).value = '';
+    emailjs.send('service_4cvhnkg', 'fr8bktb', {
+      service:     service,
+      depart:      from,
+      destination: to,
+      date:        date || 'Non précisée',
+      heure:       time || 'Non précisée',
+      nom:         name,
+      telephone:   phone
+    }).then(() => {
+      showToast('✅ Réservation envoyée ! Un chauffeur vous contacte sous 5 min.');
+      ['f-service','f-from','f-to','f-date','f-time','f-name','f-phone'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+    }).catch(() => {
+      showToast('❌ Erreur envoi. Appelez le +253 77 54 31 01');
     });
   }
 
-  // Smooth scroll on nav links
+  // ── INSCRIPTION CHAUFFEUR ──
+  function inscriptionChauffeur() {
+    emailjs.send('service_4cvhnkg', 'fr8bktb', {
+      service:     '🧑‍✈️ INSCRIPTION CHAUFFEUR',
+      depart:      'N/A',
+      destination: 'N/A',
+      date:        new Date().toLocaleDateString('fr-FR'),
+      heure:       new Date().toLocaleTimeString('fr-FR'),
+      nom:         'Nouveau chauffeur partenaire',
+      telephone:   'Voir chauffeur.html'
+    }).then(() => {
+      showToast('✅ Demande envoyée ! On vous contacte sous 24h.');
+    });
+    window.location.href = 'chauffeur.html';
+  }
+
+  // Smooth scroll
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
       const target = document.querySelector(a.getAttribute('href'));
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth' });
-      }
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
     });
   });
 
-  // Set min date on date picker
   document.getElementById('f-date').min = new Date().toISOString().split('T')[0];
 
-  // Animate stats counter
   document.querySelectorAll('.stat-num').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(10px)';
@@ -1221,17 +1249,6 @@
     }, 800);
   });
 </script>
-  <script>
-document.querySelector('form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const service = document.querySelector('[name=service]').value;
-  const depart  = document.querySelector('[name=depart]').value;
-  const dest    = document.querySelector('[name=destination]').value;
-  const nom     = document.querySelector('[name=nom]').value;
-  const tel     = document.querySelector('[name=tel]').value;
-  const msg = `Nouvelle réservation Mouv+%0A🚕 Service: ${service}%0A📍 Départ: ${depart}%0A🎯 Destination: ${dest}%0A👤 Nom: ${nom}%0A📞 Tel: ${tel}`;
-  window.open(`https://wa.me/25377543101?text=${msg}`, '_blank');
-});
-</script>
+
 </body>
 </html>
