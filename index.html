@@ -1195,12 +1195,12 @@
 
     showToast('⏳ Envoi en cours...');
 
-    emailjs.send('service_4cvhnkg', 'fr8bktb', {
+    emailjs.send('service_4cvhnkg', 'template_89xc4fn', {
       service:     service,
       depart:      from,
       destination: to,
-      date:        date || 'Non précisée',
-      heure:       time || 'Non précisée',
+      date:        date ? date : 'Non précisée',
+      heure:       time ? time : 'Non précisée',
       nom:         name,
       telephone:   phone
     }).then(() => {
@@ -1215,7 +1215,7 @@
 
   // ── INSCRIPTION CHAUFFEUR ──
   function inscriptionChauffeur() {
-    emailjs.send('service_4cvhnkg', 'fr8bktb', {
+    emailjs.send('service_4cvhnkg', 'template_89xc4fn', {
       service:     '🧑‍✈️ INSCRIPTION CHAUFFEUR',
       depart:      'N/A',
       destination: 'N/A',
