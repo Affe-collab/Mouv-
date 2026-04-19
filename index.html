@@ -1205,6 +1205,8 @@
       telephone:   phone
     }).then(() => {
       showToast('✅ Réservation envoyée ! Un chauffeur vous contacte sous 5 min.');
+      window.open('https://wa.me/25377543101?text=🚕 Nouvelle reservation Mouv+%0ANom: '+name+'%0ATel: '+phone+'%0AService: '+service+'%0ADepart: '+from+'%0ADestination: '+to, '_blank');
+      setTimeout(function(){ window.open('https://wa.me/25377165566?text=🚕 Nouvelle reservation Mouv+%0ANom: '+name+'%0ATel: '+phone+'%0AService: '+service+'%0ADepart: '+from+'%0ADestination: '+to, '_blank'); }, 1500);
       ['f-service','f-from','f-to','f-date','f-time','f-name','f-phone'].forEach(id => {
         document.getElementById(id).value = '';
       });
